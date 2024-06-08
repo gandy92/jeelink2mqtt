@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "9b89e60293033c0078e4d2b920a7cddc102701092b2269bc87dd1d3e4385f9ec"
+            "sha256": "3d67f1c768d0621b2588dbc734b54a25281ed3971ab26d4850fa1792ddbe5151"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -25,6 +25,15 @@
             ],
             "index": "pypi",
             "version": "==3.4.3"
+        },
+        "paho-mqtt": {
+            "hashes": [
+                "sha256:12d6e7511d4137555a3f6ea167ae846af2c7357b10bc6fa4f7c3968fc1723834",
+                "sha256:6db9ba9b34ed5bc6b6e3812718c7e06e2fd7444540df2455d2c51bd58808feee"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7'",
+            "version": "==2.1.0"
         },
         "pyserial": {
             "hashes": [

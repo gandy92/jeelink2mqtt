@@ -2,7 +2,10 @@ import asyncio
 import logging
 import sys
 import time
+import paho
 
+import paho.mqtt
+import paho.mqtt.client
 import serial_asyncio
 
 
@@ -64,6 +67,21 @@ class LaCrosse:
         )
 
 
+def mqtt_on_connect(client, userdata, connect_flags, reason_code, properties):
+    if reason_code == 0:
+        log.info("MQTT: Connected successfully to the MQTT broker")
+    else:
+        log.error(f"MQTT: Failed to connect with code {reason_code}")
+
+
+def mqtt_on_disconnect(client, userdata, reason_code):
+    log.info("MQTT: Disconnected from the MQTT broker")
+
+
+def mqtt_on_log(client, userdata, level, buf):
+    log.debug(f"MQTT: Message {buf}")
+
+
 if __name__ == "__main__":
     log = logging.getLogger(__name__)
     log.setLevel("DEBUG")
@@ -72,9 +90,25 @@ if __name__ == "__main__":
     sh.setFormatter(fmt)
     log.addHandler(sh)
 
+    mqtt = paho.mqtt.client.Client(
+        paho.mqtt.enums.CallbackAPIVersion.VERSION2, client_id="jeelink2mqtt"
+    )
+    mqtt.on_connect = mqtt_on_connect
+    # mqtt.on_log = mqtt_on_log
+    mqtt.on_disconnect = mqtt_on_disconnect
+
+    mqtt.connect("localhost", 1883, 60)
+    mqtt.loop_start()
+
+    while not mqtt.is_connected():
+        log.debug("MQTT: Waiting for connection")
+        time.sleep(1)
+
     try:
         s = Serial()
         asyncio.run(s.main())
     except KeyboardInterrupt:
+        mqtt.loop_stop()
+        mqtt.disconnect()
         time.sleep(2)
         print("Terminated")
