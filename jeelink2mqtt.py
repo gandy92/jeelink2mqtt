@@ -27,13 +27,12 @@ class Serial:
             msg = LaCrosse.decodeMessage(msg)
 
 
-"""
-Class for decoding the LaCrosse messages.
-Protocol: http://fredboboss.free.fr/articles/tx29.php
-"""
-
-
 class LaCrosse:
+    """
+    Class for decoding the LaCrosse messages.
+    Protocol: http://fredboboss.free.fr/articles/tx29.php
+    """
+
     @staticmethod
     def decodeMessage(message):
         # log.debug(f"LaCrosse: Decoding message: {message}")
