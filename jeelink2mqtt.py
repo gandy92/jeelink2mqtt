@@ -2,32 +2,13 @@ import asyncio
 import logging
 import sys
 import time
-import paho
 
+import paho
 import paho.mqtt
 import paho.mqtt.client
 import serial_asyncio
 
-
-class Serial:
-    async def main(self):
-        try:
-            self.reader, self.writer = await serial_asyncio.open_serial_connection(
-                url="/dev/ttyUSB0", baudrate=57600
-            )
-        except IOError:
-            log.error("Can not open USB device!")
-            exit("No device")
-
-        # wait till jeelink has settled to ensure init sequence will be received
-        time.sleep(2)
-        log.info("Start receiving...")
-        await asyncio.gather(self.receive())
-
-    async def receive(self):
-        while True:
-            msg = await self.reader.readuntil(b"\n")
-            msg = LaCrosse.decodeMessage(msg)
+sensors = {}
 
 
 class LaCrosse:
@@ -62,9 +43,87 @@ class LaCrosse:
         batteryWeak = int(values[6]) >> 7
         humidity = int(values[6]) & 0x7F
 
-        log.debug(
-            f"LaCrosse: Sensor reporting: ID {id}, Temperature {temperature}, Humidity {humidity}, Battery new {batteryNew}, Battery weak {batteryWeak}"
-        )
+        # log.debug(
+        #     f"LaCrosse: Sensor reporting: ID {id}, Temperature {temperature}, Humidity {humidity}, Battery new {batteryNew}, Battery weak {batteryWeak}"
+        # )
+
+        return {
+            "id": id,
+            "batteryNew": batteryNew,
+            "batteryWeak": batteryWeak,
+            "temperature": temperature,
+            "humidity": humidity,
+        }
+
+
+class Serial:
+    def __init__(self, mqtt):
+        self.mqtt = mqtt
+
+    async def main(self):
+        try:
+            self.reader, self.writer = await serial_asyncio.open_serial_connection(
+                url="/dev/ttyUSB0", baudrate=57600
+            )
+        except IOError:
+            log.error("Can not open USB device!")
+            exit("No device")
+
+        # wait till jeelink has settled to ensure init sequence will be received
+        time.sleep(2)
+        log.info("Start receiving...")
+        await asyncio.gather(self.receive())
+
+    async def receive(self):
+        while True:
+            msg = await self.reader.readuntil(b"\n")
+            msg = LaCrosse.decodeMessage(msg)
+            if msg is not None:
+                if msg["id"] not in sensors:
+                    sensors[msg["id"]] = Sensor(self.mqtt, msg["id"])
+                sensors[msg["id"]].update(msg)
+
+
+class Sensor:
+    def __init__(self, mqtt, id):
+        self.mqtt = mqtt
+        self.id = id
+        self.batteryNew = None
+        self.batteryWeak = None
+        self.temperature = None
+        self.humidity = None
+
+    def update(self, values):
+        self._update("batteryNew", values["batteryNew"])
+        self._update("batteryWeak", values["batteryWeak"])
+        self._update("temperature", values["temperature"])
+        self._update("humidity", values["humidity"])
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    def temperature(self):
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, value):
+        self._temperature = value
+
+    def _update(self, prop, value):
+        if getattr(self, prop) != value:
+            log.debug(
+                f"Sensor({self.id}) updated {prop} from {self.__getattribute__(prop)} to {value}"
+            )
+            setattr(self, prop, value)
+
+    def __repr__(self) -> str:
+        return f"Sensor(id={self.id}, temperature={self.temperature}, humidity={self.humidity}, batteryWeak={self.batteryWeak}, batteryNew={self.batteryNew})"
 
 
 def mqtt_on_connect(client, userdata, connect_flags, reason_code, properties):
@@ -74,7 +133,7 @@ def mqtt_on_connect(client, userdata, connect_flags, reason_code, properties):
         log.error(f"MQTT: Failed to connect with code {reason_code}")
 
 
-def mqtt_on_disconnect(client, userdata, reason_code):
+def mqtt_on_disconnect(client, userdata, flags, reason_code, properties):
     log.info("MQTT: Disconnected from the MQTT broker")
 
 
@@ -105,7 +164,7 @@ if __name__ == "__main__":
         time.sleep(1)
 
     try:
-        s = Serial()
+        s = Serial(mqtt)
         asyncio.run(s.main())
     except KeyboardInterrupt:
         mqtt.loop_stop()
