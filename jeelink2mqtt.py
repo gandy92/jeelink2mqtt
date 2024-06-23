@@ -10,6 +10,8 @@ import paho.mqtt
 import paho.mqtt.client
 import serial_asyncio
 
+from sensors import Sensor
+
 # contains all fetched sensors via Jeelink
 sensors = {}
 # list of sensor that we want to publish to MQTT
@@ -86,50 +88,8 @@ class Serial:
             msg = LaCrosse.decodeMessage(msg)
             if msg is not None:
                 if msg["id"] not in sensors:
-                    sensors[msg["id"]] = Sensor(self.mqtt, msg["id"])
+                    sensors[msg["id"]] = Sensor(self.mqtt, msg["id"], log)
                 sensors[msg["id"]].update(msg)
-
-
-class Sensor:
-    def __init__(self, mqtt, id):
-        self.mqtt = mqtt
-        self.id = id
-        self.batteryNew = None
-        self.batteryWeak = None
-        self.temperature = None
-        self.humidity = None
-
-    def update(self, values):
-        self._update("batteryNew", values["batteryNew"])
-        self._update("batteryWeak", values["batteryWeak"])
-        self._update("temperature", values["temperature"])
-        self._update("humidity", values["humidity"])
-
-    @property
-    def id(self):
-        return self._id
-
-    @id.setter
-    def id(self, value):
-        self._id = value
-
-    @property
-    def temperature(self):
-        return self._temperature
-
-    @temperature.setter
-    def temperature(self, value):
-        self._temperature = value
-
-    def _update(self, prop, value):
-        if getattr(self, prop) != value:
-            log.debug(
-                f"Sensor {self.id}\t{prop}\tfrom\t{self.__getattribute__(prop)}\tto\t{value:<4}"
-            )
-            setattr(self, prop, value)
-
-    def __repr__(self) -> str:
-        return f"Sensor(id={self.id}, temperature={self.temperature}, humidity={self.humidity}, batteryWeak={self.batteryWeak}, batteryNew={self.batteryNew})"
 
 
 def mqtt_on_connect(client, userdata, connect_flags, reason_code, properties):
