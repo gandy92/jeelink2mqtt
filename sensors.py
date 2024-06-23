@@ -1,16 +1,27 @@
 import logging
 
+from paho.mqtt.client import Client
 
-class Sensor:
+from homeassistant import HomeAssistantSensor
+
+
+class Sensor(HomeAssistantSensor):
     log = logging.getLogger("jeelink2mqtt")
 
-    def __init__(self, mqtt, id):
+    def __init__(self, mqtt: Client, id: str, is_whitelisted: bool, name="invalid"):
         self.mqtt = mqtt
         self.id = id
+        self.is_whitelisted = is_whitelisted
+        self.name = name
         self.batteryNew = None
         self.batteryWeak = None
         self.temperature = None
         self.humidity = None
+
+        super(Sensor, self).__init__(mqtt, id, name)
+
+        if self.is_whitelisted:
+            self.publish_hass_discovery()
 
     def update(self, values):
         self._update("batteryNew", values["batteryNew"])
@@ -35,11 +46,16 @@ class Sensor:
         self._temperature = value
 
     def _update(self, prop, value):
+        # update the value if it changes
         if getattr(self, prop) != value:
             self.log.debug(
                 f"Sensor {self.id}\t{prop}\tfrom\t{self.__getattribute__(prop)}\tto\t{value:<4}"
             )
             setattr(self, prop, value)
+
+            # publish to mqtt
+            if self.is_whitelisted:
+                self.publish_hass_change()
 
     def __repr__(self) -> str:
         return f"Sensor(id={self.id}, temperature={self.temperature}, humidity={self.humidity}, batteryWeak={self.batteryWeak}, batteryNew={self.batteryNew})"

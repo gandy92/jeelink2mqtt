@@ -14,7 +14,7 @@ from serials import Serial
 # contains all fetched sensors via Jeelink
 sensors = {}
 # list of sensor that we want to publish to MQTT
-sensors_whitelist = []
+sensors_whitelist = {}
 
 
 def mqtt_on_connect(client, userdata, connect_flags, reason_code, properties):
@@ -69,12 +69,7 @@ if __name__ == "__main__":
     config.read(args.config_file)
 
     for sensor_name in config.sections():
-        sensors_whitelist.append(
-            {
-                "key": config[sensor_name]["id"],
-                "name": sensor_name,
-            }
-        )
+        sensors_whitelist[int(config[sensor_name]["id"])] = sensor_name
 
     # logging
     log = logging.getLogger("jeelink2mqtt")
@@ -100,7 +95,7 @@ if __name__ == "__main__":
 
     # event loop
     try:
-        s = Serial(args.jeelink_address, mqtt, sensors)
+        s = Serial(args.jeelink_address, mqtt, sensors, sensors_whitelist)
         asyncio.run(s.main())
     except KeyboardInterrupt:
         mqtt.loop_stop()

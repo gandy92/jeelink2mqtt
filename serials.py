@@ -11,10 +11,11 @@ from sensors import Sensor
 class Serial:
     log = logging.getLogger("jeelink2mqtt")
 
-    def __init__(self, jeelink_address, mqtt, sensors):
+    def __init__(self, jeelink_address, mqtt, sensors, sensors_whitelist):
         self.jeelink_address = jeelink_address
         self.mqtt = mqtt
         self.sensors = sensors
+        self.sensors_whitelist = sensors_whitelist
 
     async def main(self):
         try:
@@ -38,5 +39,11 @@ class Serial:
                 sensor_id = msg["id"]
                 # add/update sensor to sensors list
                 if sensor_id not in self.sensors:
-                    self.sensors[sensor_id] = Sensor(self.mqtt, sensor_id)
+                    is_whitelisted = sensor_id in self.sensors_whitelist
+                    self.sensors[sensor_id] = Sensor(
+                        self.mqtt,
+                        sensor_id,
+                        is_whitelisted,
+                        self.sensors_whitelist[sensor_id] if is_whitelisted else None,
+                    )
                 self.sensors[sensor_id].update(msg)
