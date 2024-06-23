@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import logging
 import sys
@@ -57,13 +58,14 @@ class LaCrosse:
 
 
 class Serial:
-    def __init__(self, mqtt):
+    def __init__(self, jeelink_address, mqtt):
+        self.jeelink_address = jeelink_address
         self.mqtt = mqtt
 
     async def main(self):
         try:
             self.reader, self.writer = await serial_asyncio.open_serial_connection(
-                url="/dev/ttyUSB0", baudrate=57600
+                url=self.jeelink_address, baudrate=57600
             )
         except IOError:
             log.error("Can not open USB device!")
@@ -118,7 +120,7 @@ class Sensor:
     def _update(self, prop, value):
         if getattr(self, prop) != value:
             log.debug(
-                f"Sensor({self.id}) updated {prop} from {self.__getattribute__(prop)} to {value}"
+                f"Sensor {self.id}\t{prop}\tfrom\t{self.__getattribute__(prop)}\tto\t{value:<4}"
             )
             setattr(self, prop, value)
 
@@ -142,6 +144,22 @@ def mqtt_on_log(client, userdata, level, buf):
 
 
 if __name__ == "__main__":
+    # cli arguments
+    parser = argparse.ArgumentParser(
+        prog="Jeelink2MQTT",
+        description="Connects to LaCrosse sensors via Jeelink and publishes received information to MQTT",
+    )
+    parser.add_argument(
+        "-j",
+        "--jeelink",
+        help="Serial port address of the connected JeeLink, default: /dev/ttyUSB0",
+        metavar="Jeelink_Address",
+        default="/dev/ttyUSB0",
+        dest="jeelink_address",
+    )
+    args = parser.parse_args()
+
+    # logging
     log = logging.getLogger(__name__)
     log.setLevel("DEBUG")
     fmt = logging.Formatter("%(asctime)s %(levelname)7s: %(message)s")
@@ -149,6 +167,7 @@ if __name__ == "__main__":
     sh.setFormatter(fmt)
     log.addHandler(sh)
 
+    # mqtt
     mqtt = paho.mqtt.client.Client(
         paho.mqtt.enums.CallbackAPIVersion.VERSION2, client_id="jeelink2mqtt"
     )
@@ -163,8 +182,9 @@ if __name__ == "__main__":
         log.debug("MQTT: Waiting for connection")
         time.sleep(1)
 
+    # event loop
     try:
-        s = Serial(mqtt)
+        s = Serial(args.jeelink_address, mqtt)
         asyncio.run(s.main())
     except KeyboardInterrupt:
         mqtt.loop_stop()
