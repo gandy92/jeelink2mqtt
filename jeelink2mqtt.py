@@ -169,6 +169,14 @@ if __name__ == "__main__":
         default="config.ini",
         dest="config_file",
     )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        help="Print out debug messages",
+        action="store_true",
+        default=False,
+        dest="debug",
+    )
     args = parser.parse_args()
 
     # config file
@@ -185,7 +193,7 @@ if __name__ == "__main__":
 
     # logging
     log = logging.getLogger(__name__)
-    log.setLevel("DEBUG")
+    log.setLevel("DEBUG" if args.debug else "INFO")
     fmt = logging.Formatter("%(asctime)s %(levelname)7s: %(message)s")
     sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(fmt)
