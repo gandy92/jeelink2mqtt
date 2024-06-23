@@ -55,6 +55,13 @@ if __name__ == "__main__":
         dest="config_file",
     )
     parser.add_argument(
+        "--mqtt",
+        help="Hostname of MQTT, default: localhost",
+        metavar="host",
+        default="localhost",
+        dest="mqtt_host",
+    )
+    parser.add_argument(
         "-d",
         "--debug",
         help="Print out debug messages",
@@ -86,7 +93,7 @@ if __name__ == "__main__":
     # mqtt.on_log = mqtt_on_log
     mqtt.on_disconnect = mqtt_on_disconnect
 
-    mqtt.connect("localhost", 1883, 60)
+    mqtt.connect(args.mqtt_host, 1883, 60)
     mqtt.loop_start()
 
     while not mqtt.is_connected():
