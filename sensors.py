@@ -1,12 +1,16 @@
+import logging
+
+
 class Sensor:
-    def __init__(self, mqtt, id, log):
+    log = logging.getLogger("jeelink2mqtt")
+
+    def __init__(self, mqtt, id):
         self.mqtt = mqtt
         self.id = id
         self.batteryNew = None
         self.batteryWeak = None
         self.temperature = None
         self.humidity = None
-        self.log = log
 
     def update(self, values):
         self._update("batteryNew", values["batteryNew"])

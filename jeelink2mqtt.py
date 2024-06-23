@@ -77,12 +77,10 @@ if __name__ == "__main__":
         )
 
     # logging
-    # FIXME define this globally?
-    log = logging.getLogger(__name__)
+    log = logging.getLogger("jeelink2mqtt")
     log.setLevel("DEBUG" if args.debug else "INFO")
-    fmt = logging.Formatter("%(asctime)s %(levelname)7s: %(message)s")
     sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(fmt)
+    sh.setFormatter(logging.Formatter("%(asctime)s %(levelname)7s: %(message)s"))
     log.addHandler(sh)
 
     # mqtt
@@ -102,7 +100,7 @@ if __name__ == "__main__":
 
     # event loop
     try:
-        s = Serial(args.jeelink_address, mqtt, log, sensors)
+        s = Serial(args.jeelink_address, mqtt, sensors)
         asyncio.run(s.main())
     except KeyboardInterrupt:
         mqtt.loop_stop()

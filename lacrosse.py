@@ -1,3 +1,6 @@
+import logging
+
+
 class LaCrosse:
     """
     Class for decoding the LaCrosse messages.
@@ -5,9 +8,10 @@ class LaCrosse:
     """
 
     @staticmethod
-    def decodeMessage(message, log):
+    def decodeMessage(message):
         # log.debug(f"LaCrosse: Decoding message: {message}")
         values = message.split()
+        log = logging.getLogger("jeelink2mqtt")
 
         if len(values) == 0:
             # if message != b"\n":

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 
 import serial_asyncio
@@ -8,10 +9,11 @@ from sensors import Sensor
 
 
 class Serial:
-    def __init__(self, jeelink_address, mqtt, log, sensors):
+    log = logging.getLogger("jeelink2mqtt")
+
+    def __init__(self, jeelink_address, mqtt, sensors):
         self.jeelink_address = jeelink_address
         self.mqtt = mqtt
-        self.log = log
         self.sensors = sensors
 
     async def main(self):
@@ -31,8 +33,8 @@ class Serial:
     async def receive(self):
         while True:
             msg = await self.reader.readuntil(b"\n")
-            msg = LaCrosse.decodeMessage(msg, self.log)
+            msg = LaCrosse.decodeMessage(msg)
             if msg is not None:
                 if msg["id"] not in self.sensors:
-                    self.sensors[msg["id"]] = Sensor(self.mqtt, msg["id"], self.log)
+                    self.sensors[msg["id"]] = Sensor(self.mqtt, msg["id"])
                 self.sensors[msg["id"]].update(msg)
