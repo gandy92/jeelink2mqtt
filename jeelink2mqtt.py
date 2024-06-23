@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import configparser
 import logging
 import sys
 import time
@@ -9,7 +10,10 @@ import paho.mqtt
 import paho.mqtt.client
 import serial_asyncio
 
+# contains all fetched sensors via Jeelink
 sensors = {}
+# list of sensor that we want to publish to MQTT
+sensors_whitelist = []
 
 
 class LaCrosse:
@@ -153,11 +157,31 @@ if __name__ == "__main__":
         "-j",
         "--jeelink",
         help="Serial port address of the connected JeeLink, default: /dev/ttyUSB0",
-        metavar="Jeelink_Address",
+        metavar="serial_address",
         default="/dev/ttyUSB0",
         dest="jeelink_address",
     )
+    parser.add_argument(
+        "-c",
+        "--config-file",
+        help="Path to the config ini file, default: config.ini",
+        metavar="config_file",
+        default="config.ini",
+        dest="config_file",
+    )
     args = parser.parse_args()
+
+    # config file
+    config = configparser.ConfigParser()
+    config.read(args.config_file)
+
+    for sensor_name in config.sections():
+        sensors_whitelist.append(
+            {
+                "key": config[sensor_name]["id"],
+                "name": sensor_name,
+            }
+        )
 
     # logging
     log = logging.getLogger(__name__)
