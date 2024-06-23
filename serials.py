@@ -35,6 +35,8 @@ class Serial:
             msg = await self.reader.readuntil(b"\n")
             msg = LaCrosse.decodeMessage(msg)
             if msg is not None:
-                if msg["id"] not in self.sensors:
-                    self.sensors[msg["id"]] = Sensor(self.mqtt, msg["id"])
-                self.sensors[msg["id"]].update(msg)
+                sensor_id = msg["id"]
+                # add/update sensor to sensors list
+                if sensor_id not in self.sensors:
+                    self.sensors[sensor_id] = Sensor(self.mqtt, sensor_id)
+                self.sensors[sensor_id].update(msg)
