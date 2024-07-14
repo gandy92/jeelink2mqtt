@@ -67,6 +67,7 @@ class HomeAssistantSensor:
                 {
                     "unique_id": self.get_unique_id_with_type("batt"),
                     "device_class": "battery",
+                    "unit_of_measurement": "%",
                     "value_template": "{{ value_json.battery }}",
                     **shared,
                 },
