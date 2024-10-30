@@ -17,6 +17,7 @@ class Sensor(HomeAssistantSensor):
         self.batteryWeak = None
         self.temperature = None
         self.humidity = None
+        self.logged_new = False
 
         super(Sensor, self).__init__(mqtt, id, name)
 
@@ -28,6 +29,11 @@ class Sensor(HomeAssistantSensor):
         self._update("batteryWeak", values["batteryWeak"])
         self._update("temperature", values["temperature"])
         self._update("humidity", values["humidity"])
+
+        # log new devices that usually have a new battery set
+        if self.batteryNew and not self.is_whitelisted and not self.logged_new:
+            self.log.info(f"New device found {self}")
+            self.logged_new = True
 
     @property
     def id(self):
