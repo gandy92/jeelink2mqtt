@@ -21,6 +21,8 @@ class Sensor(HomeAssistantSensor):
 
         super(Sensor, self).__init__(mqtt, id, name)
 
+        self.log.debug(f"Created sensor with {id}, is_whitelisted: {is_whitelisted}")
+
         if self.is_whitelisted:
             self.publish_hass_discovery()
 
