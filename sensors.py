@@ -57,7 +57,7 @@ class Sensor(HomeAssistantSensor):
         # update the value if it changes
         if getattr(self, prop) != value:
             self.log.debug(
-                f"Sensor {self.id}\t{prop}\tfrom\t{self.__getattribute__(prop)}\tto\t{value:<4}"
+                f"Sensor {self.id}: {prop} from {self.__getattribute__(prop)} to {value:<4}"
             )
             setattr(self, prop, value)
 
