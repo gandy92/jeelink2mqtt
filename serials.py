@@ -33,17 +33,20 @@ class Serial:
 
     async def receive(self):
         while True:
-            msg = await self.reader.readuntil(b"\n")
-            msg = LaCrosse.decodeMessage(msg)
-            if msg is not None:
-                sensor_id = msg["id"]
-                # add/update sensor to sensors list
-                if sensor_id not in self.sensors:
-                    is_whitelisted = sensor_id in self.sensors_whitelist
-                    self.sensors[sensor_id] = Sensor(
-                        self.mqtt,
-                        sensor_id,
-                        is_whitelisted,
-                        self.sensors_whitelist[sensor_id] if is_whitelisted else None,
-                    )
-                self.sensors[sensor_id].update(msg)
+            try:
+                msg = await self.reader.readuntil(b"\n")
+                msg = LaCrosse.decodeMessage(msg)
+                if msg is not None:
+                    sensor_id = msg["id"]
+                    # add/update sensor to sensors list
+                    if sensor_id not in self.sensors:
+                        is_whitelisted = sensor_id in self.sensors_whitelist
+                        self.sensors[sensor_id] = Sensor(
+                            self.mqtt,
+                            sensor_id,
+                            is_whitelisted,
+                            self.sensors_whitelist[sensor_id] if is_whitelisted else None,
+                        )
+                    self.sensors[sensor_id].update(msg)
+            except Exception as e:
+                self.log.error("Unable to read from Jeelink", e)
