@@ -1,0 +1,41 @@
+{
+    "device": {
+        "name": "${name}",
+        "identifiers": "${id}_device",
+        "model": "LaCrosse",
+        "model_id": "${id}"
+    },
+    "origin": {
+        "name": "jeelink-mqtt",
+        "sw": "${version}"
+    },
+    "components": {
+        "${hass_id}_temp": {
+            "name": "${name} Temperature",
+            "unique_id": "${hass_id}_temp",
+            "platform": "sensor",
+            "device_class": "temperature",
+            "unit_of_measurement": "°C",
+            "state_topic": "${state_topic}",
+            "value_template": "{{ value_json.temperature }}"
+        },
+        "${hass_id}_humi":{
+            "name": "${name} Humidity",
+            "unique_id": "${hass_id}_humi",
+            "platform": "sensor",
+            "device_class": "humidity",
+            "unit_of_measurement": "%",
+            "state_topic": "${state_topic}",
+            "value_template": "{{ value_json.humidity }}"
+        },
+        "${hass_id}_batt":{
+            "name": "${name} Battery",
+            "unique_id": "${hass_id}_batt",
+            "platform": "sensor",
+            "device_class": "battery",
+            "unit_of_measurement": "%",
+            "state_topic": "${state_topic}",
+            "value_template": "{{ value_json.battery }}"
+        }
+    }
+}

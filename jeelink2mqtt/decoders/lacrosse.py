@@ -1,30 +1,36 @@
 import logging
+from typing import Any
+
+from jeelink2mqtt.homeassistant import MessageDecoder
+
+logger = logging.getLogger("jeelink2mqtt")
 
 
-class LaCrosse:
+class LaCrosse(MessageDecoder):
     """
     Class for decoding the LaCrosse messages.
     Protocol: http://fredboboss.free.fr/articles/tx29.php
     """
 
     @staticmethod
-    def decodeMessage(message):
+    def extract_id(message: str) -> str:
+        if not message.startswith("OK 9 "):
+            return ""
+        values = message.split()
+        bytes = [int(v) for v in values[2:]]
+        if len(bytes) < 1:
+            return ""
+        if bytes[0] < 0 or bytes[0] > 255:
+            return ""
+
+        return f"{bytes[0]:d}"
+
+    @classmethod
+    def decode_message(cls, message: str) -> dict[str, Any]:
+        """Reurn a dict of values extracted from the message. Uses extract_id fot verification."""
+
         # log.debug(f"LaCrosse: Decoding message: {message}")
         values = message.split()
-        log = logging.getLogger("jeelink2mqtt")
-
-        if len(values) == 0:
-            # if message != b"\n":
-            log.debug(f"LaCrosse: Received empty message {message}")
-            return
-
-        if values[0].startswith(b"[LaCrosse"):
-            log.debug(f"LaCrosse: Receiver is {str(values[0])}")
-            return
-
-        if values[0] != b"OK" or values[1] != b"9":
-            log.debug(f"LaCrosse: Unknown message received {message}")
-            return
 
         try:
             id = int(values[2])
@@ -35,7 +41,7 @@ class LaCrosse:
             batteryWeak = int(values[6]) >> 7
             humidity = int(values[6]) & 0x7F
         except Exception as err:
-            log.debug(f"LaCrosse: Illegal message received {message}, {err}")
+            logger.debug(f"LaCrosse: Illegal message received {message}, {err}")
             return
 
         # log.debug(
@@ -48,4 +54,5 @@ class LaCrosse:
             "batteryWeak": batteryWeak,
             "temperature": temperature,
             "humidity": humidity,
+            "battery": 20 if batteryWeak else 100,
         }

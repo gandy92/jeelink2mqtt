@@ -1,0 +1,52 @@
+{
+    "device": {
+        "name": "${name}",
+        "identifiers": "${id}",
+        "model": "EC3000",
+        "model_id": "${id}",
+        "manufacturer": "Conrad"
+    },
+    "origin": {
+        "name": "jeelink-mqtt",
+        "sw": "${version}"
+    },
+    "components": {
+        "${hass_id}_energy_power": {
+            "name": "$name ENERGY Power",
+            "platform": "sensor",
+            "device_class": "power",
+            "state_class": "measurement",
+            "state_topic": "${state_topic}",
+            "unit_of_measurement": "W",
+            "unique_id": "${hass_id}_energy_power",
+            "value_template": "{{ value_json.power }}"
+        },
+        "${hass_id}_energy_power_max": {
+            "name": "$name ENERGY Power Max",
+            "platform": "sensor",
+            "device_class": "power",
+            "state_class": "measurement",
+            "state_topic": "${state_topic}",
+            "unit_of_measurement": "W",
+            "unique_id": "${hass_id}_energy_power_max",
+            "value_template": "{{ value_json.power_max }}"
+        },
+        "${hass_id}_energy_total": {
+            "name": "$name ENERGY Total",
+            "platform": "sensor",
+            "device_class": "energy",
+            "state_class": "total_increasing",
+            "state_topic": "${state_topic}",
+            "unit_of_measurement": "kWh",
+            "unique_id": "${hass_id}_energy_total",
+            "value_template": "{{ value_json.consumption_total }}"
+        },
+        "${hass_id}_resets": {
+            "name": "$name Resets",
+            "platform": "sensor",
+            "state_topic": "${state_topic}",
+            "unique_id": "${hass_id}_resets",
+            "value_template": "{{ value_json.resets }}"
+        }
+    }
+}

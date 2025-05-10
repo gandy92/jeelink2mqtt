@@ -1,1 +1,10 @@
 config_local.ini
+__pycache__/
+venv/
+.venv/
+jeelink2mqtt.egg-info/dependency_links.txt
+jeelink2mqtt.egg-info/entry_points.txt
+jeelink2mqtt.egg-info/PKG-INFO
+jeelink2mqtt.egg-info/requires.txt
+jeelink2mqtt.egg-info/SOURCES.txt
+jeelink2mqtt.egg-info/top_level.txt

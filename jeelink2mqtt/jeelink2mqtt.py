@@ -9,30 +9,15 @@ import paho
 import paho.mqtt
 import paho.mqtt.client
 
-from serials import Serial
+from jeelink2mqtt.homeassistant import DeviceConfig
+from jeelink2mqtt.jeelink_handler import Jeelink
+from jeelink2mqtt.mqtt_handler import MqttHandler
+from jeelink2mqtt.mqtt_handler import get_hostname
 
-# contains all fetched sensors via Jeelink
-sensors = {}
-# list of sensor that we want to publish to MQTT
-sensors_whitelist = {}
-
-
-def mqtt_on_connect(client, userdata, connect_flags, reason_code, properties):
-    if reason_code == 0:
-        log.info("MQTT: Connected successfully to the MQTT broker")
-    else:
-        log.error(f"MQTT: Failed to connect with code {reason_code}")
+logger = logging.getLogger("jeelink2mqtt")
 
 
-def mqtt_on_disconnect(client, userdata, flags, reason_code, properties):
-    log.info("MQTT: Disconnected from the MQTT broker")
-
-
-def mqtt_on_log(client, userdata, level, buf):
-    log.debug(f"MQTT: Message {buf}")
-
-
-if __name__ == "__main__":
+def main():
     # cli arguments
     parser = argparse.ArgumentParser(
         prog="Jeelink2MQTT",
@@ -71,41 +56,55 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # logging
+    logger.setLevel("DEBUG" if args.debug else "INFO")
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setFormatter(logging.Formatter("%(asctime)s %(levelname)7s: %(message)s"))
+    logger.addHandler(sh)
+
     # config file
     config = configparser.ConfigParser()
     config.read(args.config_file)
 
-    for sensor_name in config.sections():
-        sensors_whitelist[int(config[sensor_name]["id"])] = sensor_name
-
-    # logging
-    log = logging.getLogger("jeelink2mqtt")
-    log.setLevel("DEBUG" if args.debug else "INFO")
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(logging.Formatter("%(asctime)s %(levelname)7s: %(message)s"))
-    log.addHandler(sh)
+    devices: list[DeviceConfig] = []
+    for device_name in config.sections():
+        if "id" not in config[device_name]:
+            continue
+        params = dict(config[device_name].items())
+        try:
+            device = DeviceConfig(name=device_name, **params)
+            print(f"{device=}")
+            devices.append(device)
+        except Exception as e:
+            logger.exception(e)
 
     # mqtt
     mqtt = paho.mqtt.client.Client(
-        paho.mqtt.enums.CallbackAPIVersion.VERSION2, client_id="jeelink2mqtt"
+        paho.mqtt.enums.CallbackAPIVersion.VERSION2, client_id=f"jeelink2mqtt-at-{get_hostname()}"
     )
-    mqtt.on_connect = mqtt_on_connect
-    # mqtt.on_log = mqtt_on_log
-    mqtt.on_disconnect = mqtt_on_disconnect
+    handler = MqttHandler(mqtt, devices, "templates")
 
     mqtt.connect(args.mqtt_host, 1883, 60)
     mqtt.loop_start()
 
     while not mqtt.is_connected():
-        log.debug("MQTT: Waiting for connection")
+        logger.debug("MQTT: Waiting for connection")
         time.sleep(1)
 
     # event loop
     try:
-        s = Serial(args.jeelink_address, mqtt, sensors, sensors_whitelist)
-        asyncio.run(s.main())
+        s = Jeelink(args.jeelink_address, handler, devices)
+        while True:
+            try:
+                asyncio.run(s.main())
+            except OSError:
+                logger.error("JeeLink not ready - will retry in two seconds...")
+                time.sleep(2)
     except KeyboardInterrupt:
         mqtt.loop_stop()
         mqtt.disconnect()
-        time.sleep(2)
         print("Terminated")
+
+
+if __name__ == "__main__":
+    main()
