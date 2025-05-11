@@ -55,7 +55,7 @@ class Jeelink:
                 id = decoder.extract_id(message)
                 device = self.mqtt.get_device_config(decoder.__name__, id)
                 if device is None:
-                    print(f"******  unknown {decoder.__name__} {id}")
+                    # print(f"******  unknown {decoder.__name__} {id}")
                     # Todo: maybe leave some information on unknown devices somewhere
                     continue
                 data = decoder.decode_message(message)

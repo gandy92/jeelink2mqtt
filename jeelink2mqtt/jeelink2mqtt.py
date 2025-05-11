@@ -73,7 +73,7 @@ def main():
         params = dict(config[device_name].items())
         try:
             device = DeviceConfig(name=device_name, **params)
-            print(f"{device=}")
+            logger.info(f"Registering {device}")
             devices.append(device)
         except Exception as e:
             logger.exception(e)
@@ -103,7 +103,7 @@ def main():
     except KeyboardInterrupt:
         mqtt.loop_stop()
         mqtt.disconnect()
-        print("Terminated")
+        logger.info("Terminated.")
 
 
 if __name__ == "__main__":
