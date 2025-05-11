@@ -60,6 +60,7 @@ class EC3000(MessageDecoder):
         # print(hexlify(bytes(int_vals)))
         bwrcl = int_vals[19]
         if bwrcl > 2:
+            logger.debug(f"Discarding frame from EC3000_{id} because {bwrcl=}")
             return {}
 
         return {
