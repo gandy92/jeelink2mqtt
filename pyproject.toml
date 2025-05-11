@@ -15,7 +15,7 @@ classifiers = [
 dependencies = ["click", "paho-mqtt", "pyserial-asyncio", "expandvars", "psutil"]
 
 [project.scripts]
-jeelink2mqtt-cli = "jeelink2mqtt.jeelink2mqtt:main"
+jeelink2mqtt = "jeelink2mqtt.jeelink2mqtt:main"
 
 [project.optional-dependencies]
 #test = ["pytest", "pytest-cov"]
