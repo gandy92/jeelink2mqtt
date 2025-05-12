@@ -57,13 +57,8 @@ class EC3000(MessageDecoder):
         values = message.split()
 
         int_vals = [int(v) for v in values[2:]]
-        # print(hexlify(bytes(int_vals)))
-        bwrcl = int_vals[19]
-        if bwrcl > 2:
-            logger.debug(f"Discarding frame from EC3000_{id} because {bwrcl=}")
-            return {}
 
-        return {
+        data = {
             "id": id,
             "seconds_total": (int_vals[2] << 24) + (int_vals[3] << 16) + (int_vals[4] << 8) + int_vals[5],
             "seconds_on": (int_vals[6] << 24) + (int_vals[7] << 16) + (int_vals[8] << 8) + int_vals[9],
@@ -73,3 +68,10 @@ class EC3000(MessageDecoder):
             "power_max": ((int_vals[16] << 8) + int_vals[17]) / 10.0,
             "resets": int_vals[18],
         }
+
+        bwrcl = int_vals[19]
+        if bwrcl > 2:
+            logger.debug(f"Discarding frame from EC3000_{id} with {bwrcl=}: {data=}")
+            return {}
+
+        return data

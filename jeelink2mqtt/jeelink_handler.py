@@ -54,11 +54,11 @@ class Jeelink:
                     continue
                 id = decoder.extract_id(message)
                 device = self.mqtt.get_device_config(decoder.__name__, id)
+                data = decoder.decode_message(message)  # Todo: only decode data from unknowns in debug mode
                 if device is None:
-                    logger.debug(f"Received data from unknown {decoder.__name__} device {id}")
+                    logger.debug(f"Received data from unknown {decoder.__name__}_{id}: {data=}")
                     # Todo: maybe leave some information on unknown devices somewhere
                     continue
-                data = decoder.decode_message(message)
                 if not data:
                     continue
                 logger.debug("Sending data from %s: %s", device, data)
